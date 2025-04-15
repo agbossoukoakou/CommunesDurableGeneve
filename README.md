@@ -9,3 +9,5 @@
 ## agbossou.koakou@gmail.com
 
 ## Description
+
+Notre plateforme meccommunesdurables.ge.ch répond à un besoin crucial de transparence et d'accessibilité dans un secteur à fort impact sociétal. En centralisant les indicateurs de développement durable des municipalités genevoise , nous offrons un outil de comparaison et de suivi temporel inédit qui servira aussi bien aux décideurs qu'aux citoyens. Notre solution transforme des données complexes en informations exploitables. Ce projet s'inscrit parfaitement dans la tendance croissante de demande de transparence sur les actions environnementales et sociales des institutions publiques.
