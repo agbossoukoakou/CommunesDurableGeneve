@@ -84,7 +84,11 @@ with col_eco:
     if st.button("💹 Indicateurs Économiques", key="eco_button", use_container_width=True):
         st.switch_page("pages/3_Indicateurs_Economiques.py")
 
-
+# Section des sources de données
+st.markdown("""
+    <hr>
+    <h2><i class="fas fa-database" style="color: #4682B4;"></i> Sources de données</h2>
+""", unsafe_allow_html=True)
 
 # Section des sources de données
 st.markdown("""
@@ -92,6 +96,7 @@ st.markdown("""
     <h2><i class="fas fa-database" style="color: #4682B4;"></i> Sources de données</h2>
 """, unsafe_allow_html=True)
 
+# Utilisation de deux colonnes pour les sources
 col_a, col_b = st.columns(2)
 
 with col_a:
@@ -113,7 +118,6 @@ with col_b:
             <p>Données sur la consommation énergétique, l'utilisation des ressources et la transition écologique des communes genevoises.</p>
         </div>
     """, unsafe_allow_html=True)
-
 # Section objectifs
 st.markdown("""
     <hr>
