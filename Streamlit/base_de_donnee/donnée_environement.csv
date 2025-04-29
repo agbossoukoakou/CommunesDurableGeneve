@@ -1,4 +1,4 @@
-,Commune,Année,electric_cars_per_charging_spot,elec_consumption_mwh_per_year_per_capita,renelec_production_mwh_per_year_per_capita
+,Commune,Année,Voitures_electriques_par_borne,Consommation_electrique_annuelle_MWh_par_habitant,Production_electrique_renouvelable_annuelle_MWh_par_habitant
 0,Aire-la-Ville,2023-11-30,8.5,3.4474,34.5596
 1,Aire-la-Ville,2023-12-31,18.5,3.4965,34.5444
 2,Aire-la-Ville,2024-01-31,20.0,3.5456,34.6373
