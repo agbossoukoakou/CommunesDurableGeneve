@@ -84,11 +84,7 @@ with col_eco:
     if st.button("💹 Indicateurs Économiques", key="eco_button", use_container_width=True):
         st.switch_page("pages/3_Indicateurs_Economiques.py")
 
-# Section des sources de données
-st.markdown("""
-    <hr>
-    <h2><i class="fas fa-database" style="color: #4682B4;"></i> Sources de données</h2>
-""", unsafe_allow_html=True)
+
 
 # Section des sources de données
 st.markdown("""
@@ -113,9 +109,9 @@ with col_b:
     st.markdown("""
         <div class="info-card" style="height: 150px;">
             <div class="info-card-header">
-                <i class="fas fa-bolt"></i> Reporter Énergie
+                <i class="fas fa-bolt"></i> Opendata.swiss 
             </div>
-            <p>Données sur la consommation énergétique, l'utilisation des ressources et la transition écologique des communes genevoises.</p>
+            <p>Reporter Énergie : Données sur la consommation énergétique, l'utilisation des ressources et la transition écologique des communes genevoises.</p>
         </div>
     """, unsafe_allow_html=True)
 # Section objectifs
@@ -157,7 +153,7 @@ with col2:
         </div>
     """, unsafe_allow_html=True)
 
-# Footer personnalisé
+# Footer personnalisé modifié (sans logos)
 st.markdown("""
 <footer>
     <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 20px;">
@@ -167,11 +163,6 @@ st.markdown("""
         </div>
         <div style="text-align: right;">
             <div style="font-size: 13px;">© 2025 | Projet Nomades</div>
-            <div style="font-size: 13px; margin-top: 5px;">
-                <i class="fab fa-github" style="margin-right: 5px;"></i>
-                <i class="fab fa-linkedin" style="margin-right: 5px;"></i>
-                <i class="fas fa-envelope"></i>
-            </div>
         </div>
     </div>
 </footer>
