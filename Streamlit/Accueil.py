@@ -2,6 +2,8 @@ import streamlit as st
 import os
 import pandas as pd
 
+CURR_DIR = os.path.dirname(__name__)
+
 st.set_page_config(
     page_title="Mes Communes Durables - Genève",
     layout="wide",
@@ -13,7 +15,7 @@ def local_css(file_name):
     with open(file_name) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-local_css("styles/style.css")
+local_css(os.path.join(CURR_DIR, "styles", "style.css"))
 
 # Importer FontAwesome pour icônes
 st.markdown('<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">', unsafe_allow_html=True)
