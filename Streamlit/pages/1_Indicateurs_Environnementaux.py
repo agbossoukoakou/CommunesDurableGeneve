@@ -8,12 +8,40 @@ from datetime import datetime
 import plotly.express as px
 import plotly.graph_objects as go
 
-# Configuration de la page
+# Configuration de la page et des options
+
 st.set_page_config(
     page_title="Indicateurs Environnementaux - Communes Durables",
     page_icon="🌿",
     layout="wide"
 )
+
+# Traduire les textes par défaut de Streamlit en français
+st.markdown("""
+<script>
+// Traduction de "Choose an option" en "Choisir une option" et "Select..." en "Sélectionner..."
+const mutationObserver = new MutationObserver(mutations => {
+    // Traduction pour les selectbox
+    const options = document.querySelectorAll('.stSelectbox div[data-baseweb="select"] > div > div:first-child');
+    options.forEach(option => {
+        if (option.textContent === 'Choose an option') {
+            option.textContent = 'Choisir une option';
+        }
+    });
+    
+    // Traduction pour les multiselect
+    const multiOptions = document.querySelectorAll('.stMultiSelect div[data-baseweb="select"] > div > div:first-child');
+    multiOptions.forEach(option => {
+        if (option.textContent === 'Select...') {
+            option.textContent = 'Sélectionner...';
+        }
+    });
+});
+
+// Observer les changements dans le DOM
+mutationObserver.observe(document.body, { childList: true, subtree: true });
+</script>
+""", unsafe_allow_html=True)
 
 # Charger CSS local
 def local_css(file_name):
@@ -29,6 +57,18 @@ def local_css(file_name):
 
 # Chargement du CSS
 local_css("styles/style.css")
+
+# Ajouter un CSS personnalisé pour les titres d'indicateurs
+st.markdown("""
+<style>
+.indicator-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2E8B57;
+    margin-bottom: 10px;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # Importer FontAwesome pour icônes
 st.markdown('<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">', unsafe_allow_html=True)
@@ -69,13 +109,6 @@ df_dechet["Année"] = df_dechet["Année"].astype(int)
 # Pour df_env, convertir les dates en format datetime
 df_env["Date_Complète"] = pd.to_datetime(df_env["Année"])
 
-# Initialiser la session state pour contrôler l'animation
-if 'animation_playing' not in st.session_state:
-    st.session_state.animation_playing = {}
-
-if 'animation_speed' not in st.session_state:
-    st.session_state.animation_speed = {}
-
 # Fonction pour formater les dates
 def format_date(date_obj):
     return date_obj.strftime("%d/%m/%Y")
@@ -93,7 +126,7 @@ def render_bar_chart_race_annee(title, description, source, df, value_col, top_n
     st.markdown(f"""
         <div class="info-card" style="border-left-color: #2E8B57;">
             <div class="info-card-header">
-                <i class="fas fa-chart-line"></i> {title}
+                <i class="fas fa-chart-line"></i> <span class="indicator-title">{title}</span>
             </div>
             <p>{description}</p>
             <p><em>Source: {source}</em></p>
@@ -115,31 +148,17 @@ def render_bar_chart_race_annee(title, description, source, df, value_col, top_n
     # Créer des filtres pour sélectionner des communes spécifiques
     st.markdown("""
         <div style="background-color: #f5f7f5; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-            <p style="font-weight: 600; color: #2E8B57; margin-bottom: 10px;">Sélectionner des communes spécifiques (facultatif):</p>
+            <p style="font-weight: 600; color: #2E8B57; margin-bottom: 10px;">Sélectionner des communes pour visualiser l'animation de graphique à barres:</p>
         </div>
     """, unsafe_allow_html=True)
     
     selected_communes = st.multiselect(
-        "Communes à inclure", 
+        "Sélectionner des communes à comparer", 
         all_communes,
         default=[],
         key=f"{section_id}_select_communes",
-        help="Sélectionnez des communes spécifiques ou laissez vide pour voir le top 10"
+        help="Sélectionnez au moins une commune pour visualiser le graphique"
     )
-    
-    # Configuration de l'animation
-    st.markdown("""
-        <div style="background-color: #f5f7f5; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-            <p style="font-weight: 600; color: #2E8B57; margin-bottom: 10px;">Animation de l'évolution temporelle:</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # Initialiser les variables de session si nécessaires
-    if section_id not in st.session_state.animation_playing:
-        st.session_state.animation_playing[section_id] = False
-    
-    if section_id not in st.session_state.animation_speed:
-        st.session_state.animation_speed[section_id] = 500  # Durée en ms entre frames (500ms = vitesse moyenne)
     
     # Créer un dictionnaire pour stocker les couleurs des communes
     commune_colors = {}
@@ -152,57 +171,17 @@ def render_bar_chart_race_annee(title, description, source, df, value_col, top_n
     for year in years:
         year_data = df_filtered_anim[df_filtered_anim["Année"] == year].copy()
         
-        # Filtrer pour les communes sélectionnées si spécifié
+        # Filtrer pour les communes sélectionnées
         if selected_communes:
             year_data = year_data[year_data["Commune"].isin(selected_communes)]
-        else:
-            # Sinon prendre le top N
-            year_data = year_data.sort_values(by=value_col, ascending=ascending).head(top_n)
-        
-        # Trier pour l'affichage
-        year_data = year_data.sort_values(by=value_col, ascending=not ascending)
-        
-        frames_data.append({"year": year, "data": year_data})
+            
+            # Trier pour l'affichage
+            year_data = year_data.sort_values(by=value_col, ascending=not ascending)
+            
+            frames_data.append({"year": year, "data": year_data})
     
-    # Contrôles d'animation
-    col1, col2, col3 = st.columns([1, 1, 1])
-    
-    with col1:
-        if not st.session_state.animation_playing[section_id]:
-            play_button = st.button("▶️ Lancer l'animation", key=f"{section_id}_play")
-            if play_button:
-                st.session_state.animation_playing[section_id] = True
-                st.rerun()
-        else:
-            pause_button = st.button("⏸️ Pause", key=f"{section_id}_pause")
-            if pause_button:
-                st.session_state.animation_playing[section_id] = False
-                st.rerun()
-    
-    with col2:
-        reset_button = st.button("🔄 Recommencer", key=f"{section_id}_reset")
-
-    with col3:
-        speed = st.select_slider(
-            "Vitesse d'animation", 
-            options=["Très lente", "Lente", "Moyenne", "Rapide", "Très rapide"],
-            value="Moyenne",
-            key=f"{section_id}_speed_slider"
-        )
-        
-        # Conversion de la vitesse en durée entre frames (ms)
-        speed_map = {
-            "Très lente": 1000,
-            "Lente": 750,
-            "Moyenne": 500,
-            "Rapide": 250,
-            "Très rapide": 100
-        }
-        st.session_state.animation_speed[section_id] = speed_map[speed]
-    
-    # Créer une figure Plotly avec animation fluide
-    # Pour une animation fluide, nous créons une seule figure avec plusieurs frames
-    if len(frames_data) > 0:
+    # Créer une figure Plotly avec animation fluide seulement si des communes sont sélectionnées
+    if selected_communes and len(frames_data) > 0:
         # Obtenir toutes les communes uniques dans les frames pour définir les couleurs de manière cohérente
         all_frame_communes = set()
         for frame in frames_data:
@@ -284,10 +263,8 @@ def render_bar_chart_race_annee(title, description, source, df, value_col, top_n
             )
             frames.append(frame)
         
-        fig.frames = frames
-        
-        # Configuration des boutons d'animation
-        playback_speed = st.session_state.animation_speed[section_id]
+        fig.frames = frames# Configuration des boutons d'animation - vitesse moyenne par défaut
+        playback_speed = 500  # 500ms entre frames = vitesse moyenne
         
         # Configuration des animations
         fig.update_layout(
@@ -358,21 +335,8 @@ def render_bar_chart_race_annee(title, description, source, df, value_col, top_n
         
         # Afficher le graphique
         st.plotly_chart(fig, use_container_width=True)
-        
-        # Auto-play si activé
-        if st.session_state.animation_playing[section_id]:
-            # Injecter du code JS pour auto-play
-            js_code = f"""
-                <script>
-                    setTimeout(function() {{
-                        const buttons = document.querySelectorAll('button.modebar-btn[data-title="Play"]');
-                        for (let button of buttons) {{
-                            button.click();
-                        }}
-                    }}, 1000);  // Attendre que le graphique soit chargé
-                </script>
-            """
-            st.markdown(js_code, unsafe_allow_html=True)
+    elif not selected_communes:
+        st.info("Veuillez sélectionner au moins une commune pour visualiser l'animation.")
     
     # Visualisation traditionnelle (graphique de tendance)
     st.markdown("""
@@ -479,7 +443,7 @@ def render_bar_chart_race_date(title, description, source, df, value_col, top_n=
     st.markdown(f"""
         <div class="info-card" style="border-left-color: #2E8B57;">
             <div class="info-card-header">
-                <i class="fas fa-chart-line"></i> {title}
+                <i class="fas fa-chart-line"></i> <span class="indicator-title">{title}</span>
             </div>
             <p>{description}</p>
             <p><em>Source: {source}</em></p>
@@ -502,31 +466,17 @@ def render_bar_chart_race_date(title, description, source, df, value_col, top_n=
     # Créer des filtres pour sélectionner des communes spécifiques
     st.markdown("""
         <div style="background-color: #f5f7f5; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-            <p style="font-weight: 600; color: #2E8B57; margin-bottom: 10px;">Sélectionner des communes spécifiques (facultatif):</p>
+            <p style="font-weight: 600; color: #2E8B57; margin-bottom: 10px;">Sélectionner des communes pour visualiser l'animation de graphique à barres:</p>
         </div>
     """, unsafe_allow_html=True)
     
     selected_communes = st.multiselect(
-        "Communes à inclure", 
+        "Sélectionner des communes à comparer", 
         all_communes,
         default=[],
         key=f"{section_id}_select_communes",
-        help="Sélectionnez des communes spécifiques ou laissez vide pour voir le top 10"
+        help="Sélectionnez au moins une commune pour visualiser le graphique"
     )
-    
-    # Configuration de l'animation
-    st.markdown("""
-        <div style="background-color: #f5f7f5; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-            <p style="font-weight: 600; color: #2E8B57; margin-bottom: 10px;">Animation de l'évolution temporelle:</p>
-        </div>
-    """"", unsafe_allow_html=True)
-    
-    # Initialiser les variables de session si nécessaires
-    if section_id not in st.session_state.animation_playing:
-        st.session_state.animation_playing[section_id] = False
-    
-    if section_id not in st.session_state.animation_speed:
-        st.session_state.animation_speed[section_id] = 500  # Durée en ms entre frames (500ms = vitesse moyenne)
     
     # Créer un dictionnaire pour stocker les couleurs des communes
     commune_colors = {}
@@ -539,56 +489,17 @@ def render_bar_chart_race_date(title, description, source, df, value_col, top_n=
     for i, date in enumerate(dates):
         date_data = df_filtered_anim[df_filtered_anim["Date_Complète"] == date].copy()
         
-        # Filtrer pour les communes sélectionnées si spécifié
+        # Filtrer pour les communes sélectionnées
         if selected_communes:
             date_data = date_data[date_data["Commune"].isin(selected_communes)]
-        else:
-            # Sinon prendre le top N
-            date_data = date_data.sort_values(by=value_col, ascending=ascending).head(top_n)
-        
-        # Trier pour l'affichage
-        date_data = date_data.sort_values(by=value_col, ascending=not ascending)
-        
-        frames_data.append({"date": date, "date_label": date_labels[i], "data": date_data})
+            
+            # Trier pour l'affichage
+            date_data = date_data.sort_values(by=value_col, ascending=not ascending)
+            
+            frames_data.append({"date": date, "date_label": date_labels[i], "data": date_data})
     
-    # Contrôles d'animation
-    col1, col2, col3 = st.columns([1, 1, 1])
-    
-    with col1:
-        if not st.session_state.animation_playing[section_id]:
-            play_button = st.button("▶️ Lancer l'animation", key=f"{section_id}_play")
-            if play_button:
-                st.session_state.animation_playing[section_id] = True
-                st.rerun()
-        else:
-            pause_button = st.button("⏸️ Pause", key=f"{section_id}_pause")
-            if pause_button:
-                st.session_state.animation_playing[section_id] = False
-                st.rerun()
-    
-    with col2:
-        reset_button = st.button("🔄 Recommencer", key=f"{section_id}_reset")
-
-    with col3:
-        speed = st.select_slider(
-            "Vitesse d'animation", 
-            options=["Très lente", "Lente", "Moyenne", "Rapide", "Très rapide"],
-            value="Moyenne",
-            key=f"{section_id}_speed_slider"
-        )
-        
-        # Conversion de la vitesse en durée entre frames (ms)
-        speed_map = {
-            "Très lente": 1000,
-            "Lente": 750,
-            "Moyenne": 500,
-            "Rapide": 250,
-            "Très rapide": 100
-        }
-        st.session_state.animation_speed[section_id] = speed_map[speed]
-    
-    # Créer une figure Plotly avec animation fluide
-    if len(frames_data) > 0:
+    # Créer une figure Plotly avec animation fluide seulement si des communes sont sélectionnées
+    if selected_communes and len(frames_data) > 0:
         # Obtenir toutes les communes uniques dans les frames pour définir les couleurs de manière cohérente
         all_frame_communes = set()
         for frame in frames_data:
@@ -672,8 +583,8 @@ def render_bar_chart_race_date(title, description, source, df, value_col, top_n=
         
         fig.frames = frames
         
-        # Configuration des boutons d'animation
-        playback_speed = st.session_state.animation_speed[section_id]
+        # Configuration des boutons d'animation - vitesse moyenne par défaut
+        playback_speed = 500  # 500ms entre frames = vitesse moyenne
         
         # Configuration des animations
         fig.update_layout(
@@ -744,21 +655,8 @@ def render_bar_chart_race_date(title, description, source, df, value_col, top_n=
         
         # Afficher le graphique
         st.plotly_chart(fig, use_container_width=True)
-        
-        # Auto-play si activé
-        if st.session_state.animation_playing[section_id]:
-            # Injecter du code JS pour auto-play
-            js_code = f"""
-                <script>
-                    setTimeout(function() {{
-                        const buttons = document.querySelectorAll('button.modebar-btn[data-title="Play"]');
-                        for (let button of buttons) {{
-                            button.click();
-                        }}
-                    }}, 1000);  // Attendre que le graphique soit chargé
-                </script>
-            """
-            st.markdown(js_code, unsafe_allow_html=True)
+    elif not selected_communes:
+        st.info("Veuillez sélectionner au moins une commune pour visualiser l'animation.")
     
     # Visualisation traditionnelle (graphique de tendance)
     st.markdown("""
@@ -838,7 +736,6 @@ def render_bar_chart_race_date(title, description, source, df, value_col, top_n=
             st.markdown("""
                 <div style="font-weight: 600; color: #2E8B57; margin-bottom: 10px;">Données détaillées:</div>
             """, unsafe_allow_html=True)
-            
             df_display = df_trend.copy()
             df_display[value_col] = df_display[value_col].round(2)
             df_display = df_display[['Commune', 'Date_Affichage', value_col]]
@@ -866,7 +763,7 @@ st.markdown("""
         Les données présentées ci-dessous sont issues de sources officielles et permettent de comparer les efforts des différentes communes genevoises.
     </p>
     <p>
-        Utilisez les animations pour voir l'évolution des performances des communes au fil du temps, ou sélectionnez des communes spécifiques pour les comparer.
+        Sélectionnez les communes qui vous intéressent pour visualiser leur évolution ou les comparer entre elles.
     </p>
 </div>
 """, unsafe_allow_html=True)
